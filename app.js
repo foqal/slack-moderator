@@ -1,61 +1,101 @@
 
 import "native-injects";
-import express from "express";
-import cookieParser from "cookie-parser";
-import bodyParser from "body-parser";
-import routes from "./routes/index";
-import {Rules} from "./src/rules";
-import {registerLogger} from "./src/logging";
+import yargs from "yargs";
+import http from "http";
+import {createApp} from "./src";
+import path from "path";
 
-const app = express();
+const argv = yargs.usage('Usage: $0 <command> [options]')
+                .version(process.env.npm_package_version || "UNKNOWN")
 
-const environment = app.get('env') || "developement";
-const config = require("./config/" + environment).default;
-const rulesConfig = require("./config/" + config.rules).default;
+                .option("environment", {
+                    description: 'The environment this is running in.'
+                })
 
-const logger = registerLogger(app, config);
+                .option("port", {
+                    description: 'The port to bind to.',
+                    type: "number"
+                })
 
-const context = {
-    logger,
-    config,
-    rulesConfig
-};
+                .option("host", {
+                    description: 'The hostname to bind to.'
+                })
 
-context.rules = new Rules(context, rulesConfig);
+                .option("config", {
+                    description: 'The config file.'
+                })
+                .option("rules-config", {
+                    description: 'The rules config file.'
+                })
+                .option("verbose", {
+                    description: "More detailed logging",
+                    alias: "v",
+                    boolean: true
+                })
+
+                .argv;
 
 
-app.use((request, response, next) => {
-    Object.entries(context).forEach(([key, value]) => {
-        if (!request[key]) {
-            request[key] = value;
+function startServer(app, context) {
+    const config = context.config.server;
+
+    const port = config.port;
+    const host = config.host;
+
+    app.set('port', port);
+    app.set('host', host);
+
+    const server = http.createServer(app);
+
+    server.listen(port, host);
+    server.on('error', error => {
+        if (error.syscall !== 'listen') {
+            throw error;
         }
+
+        if (error.code === "EACCES") {
+            context.logger.error({port, host}, "Requires elevated privileges");
+            process.exit(1);
+            return;
+        } else if (error.code === "EADDRINUSE") {
+            context.logger.error({port, host}, "Address already in use");
+            process.exit(1);
+            return;
+        }
+        throw error;
     });
-    return next();
-});
-
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser());
-
-
-app.use('/', routes);
-
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-    const err = new Error('Not Found');
-    err.status = 404;
-    next(err);
-});
-
-app.use(function(err, req, res, next) { //eslint-disable-line
-    res.error = err;
-    res.status(err.status || 500).send({
-        message: err.message,
-        error: environment === 'development' ? err : {}
+    server.on('listening', () => {
+        context.logger.info({port, host}, "Listening");
     });
-});
+}
 
 
-logger.info("Started...");
+function run(args) {
 
-module.exports = app;
+    const environment = args.environment || process.env.NODE_ENV || "development";
+
+    const defaultConfigPath = path.join(__dirname, "config");
+    const configFile = args.config || path.join(defaultConfigPath, environment);
+    const config = require(configFile).default;
+    config.server.host = args.host || config.server.host;
+    config.server.port = args.port || config.server.port;
+    config.logging.stdoutLevel = args.verbose ? "debug" : config.logging.stdoutLevel;
+
+
+    const rulesFile = args.rulesConfig || path.join(defaultConfigPath, config.rules || "rules");
+    const rulesConfig = require(rulesFile).default;
+
+    const {app, context} = createApp(environment, config, rulesConfig);
+    context.logger.debug({
+        config: configFile,
+        environment,
+        host: config.server.host,
+        port: config.server.port
+    }, "Starting");
+
+    startServer(app, context);
+}
+run(argv);
+
+
+

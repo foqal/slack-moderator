@@ -33,6 +33,7 @@ npm-debug.log
 .logs
 
 docs
+dist
 
 config/rules.js
 config/development.js

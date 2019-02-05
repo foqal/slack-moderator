@@ -1,37 +1,44 @@
 {
   "name": "moderator",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "ngrok": "ngrok http 3000",
-    "start": "npm-run-all --parallel lint:watch dev:www",
-    "www": "babel-node ./bin/www  | bunyan -l debug -o short",
-    "dev:www": "nodemon --quiet --watch . --exec npm run www",
+    "start": "npm-run-all --parallel lint:watch server:watch",
+    "server": "./bin/run.sh",
+    "server:watch": "nodemon --quiet --watch . --exec npm run server",
     "test": "mocha --require @babel/register --reporter mocha-multi-reporters --reporter-options configFile=test/config.json --recursive",
     "test:watch": "npm run test -- --watch --watch-extensions 'js'",
     "lint": "esw src",
     "lint:watch": "npm run lint -- --watch",
-    "clean": "rm -rf build",
-
-
+    "clean": "rm -rf ./dist",
     "current-version": "node -e 'console.log(process.env.npm_package_version + (process.env.BUILD_VERSION ? `.${process.env.BUILD_VERSION}` : ``))'",
     "next-build-version": "node -e 'var split = process.env.npm_package_version.split(\".\"); console.log(`${split[0]}.${split[1]}.${parseInt(split[2]) + 1}`)'",
     "next-minor-version": "node -e 'var split = process.env.npm_package_version.split(\".\"); console.log(`${split[0]}.${parseInt(split[1]) + 1}.0`)'",
     "next-major-version": "node -e 'var split = process.env.npm_package_version.split(\".\"); console.log(`${parseInt(split[0]) + 1}.0.0`)'",
     "build-version-commit": "npm version `npm run --silent next-build-version` --force -a",
     "minor-version-commit": "npm version `npm run --silent next-minor-version` --force -a",
-    "major-version-commit": "npm version `npm run --silent next-major-version` --force -a"
+    "major-version-commit": "npm version `npm run --silent next-major-version` --force -a",
+    "prebuild": "npm run clean && npm-run-all --parallel test lint",
+    "build": "npm-run-all build:src build:app build:copy-package build:copy-files",
+    "build:src": "babel src -d ./dist/package/src",
+    "build:app": "babel app.js -d ./dist/package/",
+    "build:copy-package": "cp package.json package-lock.json ./dist/package/",
+    "build:copy-files": "cp README.md LICENSE.md ./dist/package",
+    "build:prod:config": "babel config/production.js -d ./dist/package/config",
+    "build:dev:config": "babel config/development.js -d ./dist/package/config",
+    "build:rules:config": "babel config/rules.js -d ./dist/package/config"
   },
   "dependencies": {
     "body-parser": "^1.18.3",
     "bunyan": "^1.8.12",
     "colors": "^1.3.3",
     "cookie-parser": "~1.4.3",
-    "debug": "~2.2.0",
     "express": "^4.16.4",
     "native-injects": "^2.0.0",
     "request": "^2.88.0",
-    "request-promise": "^4.2.2"
+    "request-promise": "^4.2.2",
+    "yargs": "^12.0.5"
   },
   "devDependencies": {
     "eslint": "^4.16.0",

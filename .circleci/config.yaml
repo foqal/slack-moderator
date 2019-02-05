@@ -1,0 +1,69 @@
+
+defaults: &defaults
+    working_directory: ~/repo
+    docker:
+        - image: circleci/node:7.10
+version: 2
+jobs:
+    build:
+        <<: *defaults
+        steps:
+            - checkout
+
+            # Download and cache dependencies
+            - restore_cache:
+                keys:
+                    - v1-dependencies-{{ checksum "package.json" }}
+                    # fallback to using the latest cache if no exact match is found
+                    - v1-dependencies-
+
+            - run: npm install
+
+            - save_cache:
+                paths:
+                    - node_modules
+                key: v1-dependencies-{{ checksum "package.json" }}
+
+            - run: npm run build
+
+            - store_test_results:
+                path: dist/test-results
+
+            - store_artifacts:
+                path: dist/native-injects
+                prefix: dist
+
+            - store_artifacts:
+                path: dist/docs
+                prefix: docs
+
+            - persist_to_workspace:
+                root: "."
+                paths:
+                    - dist/package
+    deploy:
+        <<: *defaults
+        steps:
+            - attach_workspace:
+                at: "."
+
+            - run: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+            - run: cd build/package && npm publish
+
+
+workflows:
+    version: 2
+    build-and-deploy:
+        jobs:
+            - build:
+                filters:
+                    tags:
+                        only: /.*/
+            - deploy:
+                requires:
+                    - build
+                filters:
+                    tags:
+                        only: /v.*/
+                    branches:
+                        ignore: /.*/
