@@ -236,3 +236,143 @@ This action will block the current user.
 
 
 ### Rules
+The rules are the actual checks which you want to run against the messages that users write and actions that happen. 
+The general pattern is:
+```
+...
+rules: {
+    "[rule-name]": {
+        "description": "Friendly description to describe what the rule does",
+        if: {
+            ...conditions
+        },
+        actions: [
+            "[action-name]"
+        ]
+    }
+}
+...
+```
+
+Looking at this example, you will see that a rule has a name and 3 sections. The name will be used only in logs but has to be unique.
+
+| field       | description  |
+| ----------  | ------------ |
+| description | This is just a description used to define what this rule does.
+| if          | This is the object containing the condition to match for this rule to trigger. There one root condition but can be replaced with a "and" or "or" condtion to specifiy multiple rules. ([Conditions](#conditions))
+| actions     | This a list of string action names referring to actions registered in the [Actions Block](#actions)
+
+#### Conditions
+There are obviously a few conditions to help us create a rule to validate an action starting with very simple ones to very complex conditions.
+
+##### and
+This is a meta condition and will resolve to true if all the child rules also resolve to true.
+
+*Fields:*
+
+| field   | description  |
+| ------  | ------------ |
+| rules   | This is a list of child rules all of which to resolve.
+
+*Example:*
+```
+...
+if: {
+    type: "and",
+    rules: [
+        ...child rules
+    ]
+}
+...
+```
+
+##### or
+This is a meta condition and will resolve to true if any of the child rules resolve to true.
+
+*Fields:*
+
+| field   | description  |
+| ------  | ------------ |
+| rules   | This is a list of child rules one of which to resolve.
+
+*Example:*
+```
+...
+if: {
+    type: "or",
+    rules: [
+        ...child rules
+    ]
+}
+...
+```
+
+
+##### equal
+This will compare a field in the incoming message with a static value defined in config. If these are equal this will resolve to true.
+
+*Fields:*
+
+| field   | description  |
+| ------  | ------------ |
+| field   | The field name to extract from the incoming Slack message - "text" is most common |
+| value   | The value to compare to the field |
+
+*Example:*
+```
+...
+if: {
+    type: "equal",
+    field: "type",
+    value: "file_share"
+}
+...
+```
+
+
+
+##### includes
+This will check if a string defined in config is a substring of a field in the incoming message. If the field in the incoming message has a given string, this will resolve to true.
+
+*Fields:*
+
+| field   | description  |
+| ------  | ------------ |
+| field   | The field name to extract from the incoming Slack message - "text" is most common |
+| value   | The value to look for as a substring of the incoming message object. |
+
+*Example:*
+Will resolve to true if someone sends something like `i like potatos`.
+```
+...
+if: {
+    type: "includes",
+    field: "text",
+    value: "potato"
+}
+...
+```
+
+
+
+##### token-equals
+This is a slightly more complex version of includes. This will first try to tokenize and normalize the tokens before doing a comparison. For example if you want to block anyone writing "hell", using an `includes` rule, we would also trigger on "hello world". What this condition does is it first breaks on "hello" and "world" and checks if one of those tokens is exactly equal to "hell".
+
+*Fields:*
+
+| field   | description  |
+| ------  | ------------ |
+| field   | The field name to extract from the incoming Slack message - "text" is most common |
+| value   | The value to look for as token in the given message |
+
+*Example:*
+Will resolve to true if someone sends something like `hell with this` but not `hello world`.
+```
+...
+if: {
+    type: "token-equals",
+    field: "text",
+    value: "hell"
+}
+...
+```
