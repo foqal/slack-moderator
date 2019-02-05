@@ -1,0 +1,55 @@
+{
+  "name": "moderator",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "ngrok": "ngrok http 3000",
+    "start": "npm-run-all --parallel lint:watch dev:www",
+    "www": "babel-node ./bin/www  | bunyan -l debug -o short",
+    "dev:www": "nodemon --quiet --watch . --exec npm run www",
+    "test": "mocha --require @babel/register --reporter mocha-multi-reporters --reporter-options configFile=test/config.json --recursive",
+    "test:watch": "npm run test -- --watch --watch-extensions 'js'",
+    "lint": "esw src",
+    "lint:watch": "npm run lint -- --watch",
+    "clean": "rm -rf build",
+
+
+    "current-version": "node -e 'console.log(process.env.npm_package_version + (process.env.BUILD_VERSION ? `.${process.env.BUILD_VERSION}` : ``))'",
+    "next-build-version": "node -e 'var split = process.env.npm_package_version.split(\".\"); console.log(`${split[0]}.${split[1]}.${parseInt(split[2]) + 1}`)'",
+    "next-minor-version": "node -e 'var split = process.env.npm_package_version.split(\".\"); console.log(`${split[0]}.${parseInt(split[1]) + 1}.0`)'",
+    "next-major-version": "node -e 'var split = process.env.npm_package_version.split(\".\"); console.log(`${parseInt(split[0]) + 1}.0.0`)'",
+    "build-version-commit": "npm version `npm run --silent next-build-version` --force -a",
+    "minor-version-commit": "npm version `npm run --silent next-minor-version` --force -a",
+    "major-version-commit": "npm version `npm run --silent next-major-version` --force -a"
+  },
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "bunyan": "^1.8.12",
+    "colors": "^1.3.3",
+    "cookie-parser": "~1.4.3",
+    "debug": "~2.2.0",
+    "express": "^4.16.4",
+    "native-injects": "^2.0.0",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.2"
+  },
+  "devDependencies": {
+    "eslint": "^4.16.0",
+    "ngrok": "^3.1.1",
+    "nodemon": "^1.18.9",
+    "npm-run-all": "^4.1.5",
+    "@babel/cli": "^7.0.0-beta.38",
+    "@babel/core": "^7.0.0-beta.38",
+    "@babel/node": "^7.0.0-beta.38",
+    "@babel/polyfill": "^7.0.0-beta.38",
+    "@babel/preset-env": "^7.0.0-beta.38",
+    "@babel/register": "^7.0.0-beta.38",
+    "babel-eslint": "^8.2.1",
+    "eslint-watch": "^3.1.3",
+    "expect": "^21.2.1",
+    "mocha": "^5.0.0",
+    "mocha-junit-reporter": "^1.16.0",
+    "mocha-multi-reporters": "^1.1.7",
+    "rimraf": "^2.6.2"
+  }
+}

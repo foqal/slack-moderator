@@ -1,0 +1,4 @@
+{
+  "glob": ["**/*.js"],
+  "out": "../../tmp/docs/foqal-be"
+}
