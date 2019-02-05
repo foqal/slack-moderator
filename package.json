@@ -1,6 +1,8 @@
 {
   "name": "slack-moderator",
-  "version": "0.1.4",
+  "version": "0.1.5",
+  "main": "app.js",
+  "bin": "app.js",
   "scripts": {
     "ngrok": "ngrok http 3000",
     "start": "npm-run-all --parallel lint:watch server:watch",
@@ -19,11 +21,12 @@
     "minor-version-commit": "npm version `npm run --silent next-minor-version` --force -a",
     "major-version-commit": "npm version `npm run --silent next-major-version` --force -a",
     "prebuild": "npm run clean && npm-run-all --parallel test lint",
-    "build": "npm-run-all build:src build:app build:copy-package build:copy-files",
+    "build": "npm-run-all build:src build:app build:copy-package build:copy-files build:package",
     "build:src": "babel src -d ./dist/package/src",
     "build:app": "babel app.js -d ./dist/package/",
-    "build:copy-package": "cp package.json package-lock.json ./dist/package/",
-    "build:copy-files": "cp README.md LICENSE.md ./dist/package",
+    "build:package": "babel-node ./tools/create-package.js",
+    "build:copy-package": "cp package-lock.json ./dist/package/",
+    "build:copy-files": "cp README.md LICENSE.md ./dist/package/",
     "build:prod:config": "babel config/production.js -d ./dist/package/config",
     "build:dev:config": "babel config/development.js -d ./dist/package/config",
     "build:rules:config": "babel config/rules.js -d ./dist/package/config"
