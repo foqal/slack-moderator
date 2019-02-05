@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 
 import "native-injects";
 import yargs from "yargs";
