@@ -30,7 +30,7 @@ jobs:
                 path: dist/test-results
 
             - store_artifacts:
-                path: dist/native-injects
+                path: dist/package
                 prefix: dist
 
             - store_artifacts:
