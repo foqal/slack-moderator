@@ -173,6 +173,10 @@ actions: {
 ```
 
 There are currently a few actions we support:
+
+
+
+
 #### Notify
 This action will send a message to the specified channel with the specified message. There are a few strings that are able to be replaced into the message to let the channel know what happened.
 
@@ -195,7 +199,7 @@ This action will send a message to the specified channel with the specified mess
 }
 ...
 ```
-
+---
 #### delete-message
 This action will delete the message send by the user.
 
@@ -214,7 +218,7 @@ This action will delete the message send by the user.
 }
 ...
 ```
-
+---
 #### block-user
 This action will block the current user.
 
@@ -233,6 +237,9 @@ This action will block the current user.
 }
 ...
 ```
+---
+
+
 
 
 ### Rules
@@ -262,8 +269,10 @@ Looking at this example, you will see that a rule has a name and 3 sections. The
 | if          | This is the object containing the condition to match for this rule to trigger. There one root condition but can be replaced with a "and" or "or" condtion to specifiy multiple rules. ([Conditions](#conditions))
 | actions     | This a list of string action names referring to actions registered in the [Actions Block](#actions)
 
+
 #### Conditions
 There are obviously a few conditions to help us create a rule to validate an action starting with very simple ones to very complex conditions.
+
 
 ##### and
 This is a meta condition and will resolve to true if all the child rules also resolve to true.
@@ -286,6 +295,7 @@ if: {
 ...
 ```
 
+---
 ##### or
 This is a meta condition and will resolve to true if any of the child rules resolve to true.
 
@@ -307,7 +317,7 @@ if: {
 ...
 ```
 
-
+---
 ##### equal
 This will compare a field in the incoming message with a static value defined in config. If these are equal this will resolve to true.
 
@@ -330,7 +340,7 @@ if: {
 ```
 
 
-
+---
 ##### includes
 This will check if a string defined in config is a substring of a field in the incoming message. If the field in the incoming message has a given string, this will resolve to true.
 
@@ -354,6 +364,7 @@ if: {
 ```
 
 
+---
 
 ##### token-equals
 This is a slightly more complex version of includes. This will first try to tokenize and normalize the tokens before doing a comparison. For example if you want to block anyone writing "hell", using an `includes` rule, we would also trigger on "hello world". What this condition does is it first breaks on "hello" and "world" and checks if one of those tokens is exactly equal to "hell".
