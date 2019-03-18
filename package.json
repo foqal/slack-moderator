@@ -1,6 +1,6 @@
 {
   "name": "slack-moderator",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "main": "app.js",
   "bin": "app.js",
   "scripts": {
