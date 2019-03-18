@@ -95,6 +95,14 @@ class SlackApi {
         return await this.getApiRaw(api, form, typeFormatter, url);
     }
 
+    async postMessage(channel, user, text, attachments) {
+        return this.getApi("chat.postEphemeral", {
+            channel,
+            user,
+            text,
+            attachments
+        }, FORMAT_TYPE.JSON);
+    }
 
     async sendMessage(channel, text, attachments) {
         return this.getApi("chat.postMessage", {

@@ -30,7 +30,7 @@ To have the Slack moderator be able to work, you will need to create a Slack Bot
 1. Go to the Apps dashboard in Slack - https://api.slack.com/apps and create a new App. Giving it the name you want to use.
 2. Under the Basic Information tab, you will want to store the verification token. This will be used in [General Config](#general-config).
 3. Click on Event Subscriptions and and click "On" to enable event subscriptions.
-    3.1 In the Request URL, enter whatever url you are exposing the bot as. The path should be /slack/hook. For example, if the external URL of your bot is "https://my-host.aws.com" the request URL should be "https://my-host.aws.com/slack/hook". 
+    3.1 In the Request URL, enter whatever url you are exposing the bot as. The path should be /slack/hook. For example, if the external URL of your bot is "https://my-host.aws.com" the request URL should be "https://my-host.aws.com/slack/hook".
     3.2 Once you change, it Slack will automatically test that endpoint. Make sure your bot is running and this will work.
     3.3 Subscribe to events that you want to monitor. This will depend on the rules you want to run. For example, if you want to simply see all public channel messages, subscribe to "message.channels". If you want to disable file sharing, add "file_shared".
     3.4 Save Changes at the bottom.
@@ -154,9 +154,9 @@ users: {
 },
 ...
 ```
- 
- 
- 
+
+
+
 ### Actions
 This is a block where you can configure certain actions to run and use them in the rules as triggers. For example,
 ```
@@ -193,7 +193,7 @@ This action will send a message to the specified channel with the specified mess
 ...
 "my-action": {
     type: "notify",
-    channel: "[my-admin-channel]", 
+    channel: "[my-admin-channel]",
     message: "User <@${user}> wrote 'potato' messages on channel <#${channel}>.",
     user: "my-user"
 }
@@ -238,12 +238,52 @@ This action will block the current user.
 ...
 ```
 ---
+#### warn-user
+This action will send an ephemeral message (only visible to the user) with a given message
+
+*Fields:*
+
+| field   | description  |
+| ------  | ------------ |
+| user    | This is the user to run the command as. This should match to a user registered in the [Users Section](#users). This user has to have admin permissions.
+| message | The message to send to the user |
+
+*Example:*
+```
+...
+"my-action": {
+    type: "warn-user",
+    user: "my-user",
+    message: "Please don't do that again."
+},
+...
+```
+---
+
+#### log-message
+This will simply log the message to the service log.
+*Fields:*
+
+| field   | description  |
+| ------  | ------------ |
+| message | Any additional comment to add to the log |
+
+*Example:*
+```
+...
+"my-action": {
+    type: "log-message",
+    message: "Please don't do that again."
+},
+...
+```
+---
 
 
 
 
 ### Rules
-The rules are the actual checks which you want to run against the messages that users write and actions that happen. 
+The rules are the actual checks which you want to run against the messages that users write and actions that happen.
 The general pattern is:
 ```
 ...
@@ -317,6 +357,43 @@ if: {
 ...
 ```
 
+
+---
+##### not
+This is a meta condition and will resolve the opposite of the child. If the child resolves to true, this rule
+will resolve to false.
+
+*Fields:*
+
+| field   | description  |
+| ------  | ------------ |
+| rule    | The child rule to resolve. |
+
+*Example:*
+```
+...
+if: {
+    type: "not",
+    rule: [
+        ...child rule
+    ]
+}
+...
+```
+
+---
+##### disabled
+This is a meta condition and will always resolve false.
+
+*Example:*
+```
+...
+if: {
+    type: "disabled"
+}
+...
+```
+
 ---
 ##### equal
 This will compare a field in the incoming message with a static value defined in config. If these are equal this will resolve to true.
@@ -327,6 +404,7 @@ This will compare a field in the incoming message with a static value defined in
 | ------  | ------------ |
 | field   | The field name to extract from the incoming Slack message - "text" is most common |
 | value   | The value to compare to the field |
+| null    | The instead of specifying a value, can just check that the value is null or not. This should be true or false. |
 
 *Example:*
 ```
@@ -335,6 +413,15 @@ if: {
     type: "equal",
     field: "type",
     value: "file_share"
+}
+...
+```
+Should match isNull```
+...
+if: {
+    type: "equal",
+    field: "bot",
+    null: true
 }
 ...
 ```
@@ -365,6 +452,32 @@ if: {
 
 
 ---
+##### regex-match
+This will check if a string in the incoming message matches a regular expression.
+
+*Fields:*
+
+| field   | description  |
+| ------  | ------------ |
+| field   | The field name to extract from the incoming Slack message - "text" is most common |
+| regex   | The regular expression you want to test. |
+| flags   | Optional regular expression flags such as "i" for invariant case.
+
+*Example:*
+Will resolve to true if someone sends something like `hello world` or `HELLOworld`.
+```
+...
+if: {
+    field: "text",
+    type: "regex-match",
+    regex: "hello[\ ]?world",
+    flags: "i"
+}
+...
+```
+
+
+---
 
 ##### token-equals
 This is a slightly more complex version of includes. This will first try to tokenize and normalize the tokens before doing a comparison. For example if you want to block anyone writing "hell", using an `includes` rule, we would also trigger on "hello world". What this condition does is it first breaks on "hello" and "world" and checks if one of those tokens is exactly equal to "hell".
@@ -384,6 +497,64 @@ if: {
     type: "token-equals",
     field: "text",
     value: "hell"
+}
+...
+```
+
+
+---
+
+##### tokens-in
+This, like the tokens-equals condition, will first tokenize and normalize the tokens in the message. This will then check
+if a subset of the tokens is in a given list. This method will detect things such as "hells bells" the same as "hell bell".
+
+*Fields:*
+
+| field   | description  |
+| ------  | ------------ |
+| field   | The field name to extract from the incoming Slack message - "text" is most common |
+| list    | The word list to check against. |
+
+*Word Lists*
+We currently have lists of bad words for each language and one combined list. All international word lists were used from:
+https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words and one set from http://www.bannedwordlist.com/lists/swearWords.txt
+ * bad-words - this is a longer list of words with bad words and sexual innuendo in all 25 languages below
+     * ar-bad-words - Bad words in Arabic
+     * cs-bad-words - Bad words in Czech
+     * da-bad-words - Bad words in Danish
+     * de-bad-words - Bad words in German
+     * en-bad-words - Bad words in English
+     * eo-bad-words - Bad words in Esperanto
+     * es-bad-words - Bad words in Spanish
+     * fa-bad-words - Bad words in Persian
+     * fi-bad-words - Bad words in Finnish
+     * fr-bad-words - Bad words in French
+     * hi-bad-words - Bad words in Hindi
+     * hu-bad-words - Bad words in Hungarian
+     * it-bad-words - Bad words in Italian
+     * ja-bad-words - Bad words in Japanese
+     * ko-bad-words - Bad words in Korean
+     * nl-bad-words - Bad words in Dutch
+     * no-bad-words - Bad words in Norwegian
+     * pl-bad-words - Bad words in Polish
+     * pt-bad-words - Bad words in Portuguese
+     * ru-bad-words - Bad words in Russian
+     * sv-bad-words - Bad words in Swedish
+     * th-bad-words - Bad words in Thai
+     * tlh-bad-words - Bad words in Klingon (yes it was part of the set)
+     * tr-bad-words - Bad words in Turkish
+     * zh-bad-words - Bad words in Chinese
+ * en-swear-words - This is a smaller subset of just swear words in english.
+
+
+*Example:*
+Will resolve to true if someone sends something like `hell with this` but not `hello world`.
+```
+...
+if: {
+    field: "text",
+    type: "tokens-in",
+    list: "bad-words"
 }
 ...
 ```
