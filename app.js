@@ -40,8 +40,8 @@ const argv = yargs.usage('Usage: $0 <command> [options]')
 function startServer(app, context) {
     const config = context.config.server;
 
-    const port = config.port;
-    const host = config.host;
+    const port = process.env.PORT || config.port;
+    const host = process.env.HOST || config.host;
 
     app.set('port', port);
     app.set('host', host);
@@ -97,6 +97,3 @@ function run(args) {
     startServer(app, context);
 }
 run(argv);
-
-
-
