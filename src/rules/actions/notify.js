@@ -9,7 +9,7 @@ class NotifyAction extends Action {
         this.message = rule.message;
     }
     async performAction(context, message) {
-        const msg = this.message.replace(/\$\{user\}/g, message.user).replace(/\$\{channel\}/g, message.channel);
+        const msg = this.message.replace(/\$\{user\}/g, message.user || message.bot_id).replace(/\$\{channel\}/g, message.channel);
         await this.slackApi.sendMessage(this.channel, msg);
         context.logger.info({to: message.user, rule: context.rule.name}, "Sending Message");
     }

@@ -4,7 +4,7 @@ import bodyParser from "body-parser";
 import routes from "./routes/index";
 import {Rules} from "./rules";
 import {registerLogger} from "./logging";
-
+import {loadResources} from "./resources";
 
 function createApp(environment, config, rulesConfig) {
     const app = express();
@@ -14,7 +14,8 @@ function createApp(environment, config, rulesConfig) {
     const context = {
         logger,
         config,
-        rulesConfig
+        rulesConfig,
+        resources: loadResources()
     };
 
     context.rules = new Rules(context, rulesConfig);
@@ -57,5 +58,3 @@ function createApp(environment, config, rulesConfig) {
 }
 
 export {createApp};
-
-

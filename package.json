@@ -1,6 +1,6 @@
 {
   "name": "slack-moderator",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "main": "app.js",
   "bin": "app.js",
   "scripts": {
@@ -21,7 +21,7 @@
     "minor-version-commit": "npm version `npm run --silent next-minor-version` --force -a",
     "major-version-commit": "npm version `npm run --silent next-major-version` --force -a",
     "prebuild": "npm run clean && npm-run-all --parallel test lint",
-    "build": "npm-run-all build:src build:app build:copy-package build:copy-files build:package",
+    "build": "npm-run-all build:src build:app build:copy-package build:copy-files build:package build:rules:resources",
     "build:src": "babel src -d ./dist/package/src",
     "build:app": "babel app.js -d ./dist/package/",
     "build:package": "babel-node ./tools/create-package.js",
@@ -29,7 +29,8 @@
     "build:copy-files": "cp README.md LICENSE.md ./dist/package/",
     "build:prod:config": "babel config/production.js -d ./dist/package/config",
     "build:dev:config": "babel config/development.js -d ./dist/package/config",
-    "build:rules:config": "babel config/rules.js -d ./dist/package/config"
+    "build:rules:config": "babel config/rules.js -d ./dist/package/config",
+    "build:rules:resources": "babel resources -d ./dist/package/resources"
   },
   "dependencies": {
     "body-parser": "^1.18.3",
@@ -38,6 +39,7 @@
     "cookie-parser": "~1.4.3",
     "express": "^4.16.4",
     "native-injects": "^2.0.0",
+    "natural": "^0.6.3",
     "request": "^2.88.0",
     "request-promise": "^4.2.2",
     "yargs": "^12.0.5"
