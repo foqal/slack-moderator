@@ -1,9 +1,11 @@
 import natural from "natural";
 
-const tokenizer = new natural.TreebankWordTokenizer();
-
 function tokenize(value) {
-    return tokenizer.tokenize(value.toLowerCase()).map(token => natural.PorterStemmer.stem(token));
+    return value
+            .toLowerCase()
+            .split(" ")
+            .mapFilter(token => token.replace(/^[^a-z0-9-!@<]+/, ""))
+            .map(token => natural.PorterStemmer.stem(token));
 }
 
 function cachedTokenize(message, field) {
